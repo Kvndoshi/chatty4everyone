@@ -10,52 +10,37 @@ npm run build    # Production build
 npm run lint     # Run ESLint
 ```
 
-No test suite is configured.
+No test suite is configured. Verify UI changes in a browser (the editor at `/editor`, the widget via a host page that loads `/widget.js`).
 
 ## Architecture
 
-**Chatty4Everyone** is a purely frontend, client-side chatbot builder. There is no backend or API — all state is ephemeral in React. The app generates embed code snippets that reference a hypothetical `chatty4everyone.dev` CDN/service.
+**Chatty4Everyone** lets anyone add an AI assistant to their website with one script tag. Next.js 16 App Router, React 19, Tailwind v4 (landing page only — the editor and widget use inline styles + CSS variables).
 
-### Page flow
+### Routes
 
-`src/app/page.tsx` toggles between two views via a single boolean state:
-1. `LandingPage` — marketing page with a "Get Started" CTA
-2. `ChatbotWizard` — the 6-step configuration wizard
+| Route | What |
+|---|---|
+| `/` | `LandingPage` (marketing); CTA → `/editor` |
+| `/editor` | The builder. Client-only (`EditorLoader` → `dynamic(..., { ssr: false })`) because it reads browser storage on first render |
+| `/embed/[botId]` | Rendered inside the iframe on customer sites. Checks the Referer against the bot's allowed domains, mints a visitor session token |
+| `public/widget.js` | Plain-JS loader: creates the iframe, sizes/positions it from `box` postMessages, exposes `window.Chatty.open/close/toggle` |
+| `/api/chat` | Streams answers (plain text). Three auth modes: draft (owner's key in body), owner (edit token), visitor (session token) |
+| `/api/bots`, `/api/bots/[id]` | Publish (POST) and update/read (PUT/GET with `Authorization: Bearer <editToken>`) |
+| `/api/verify-key`, `/api/knowledge`, `/api/models` | Key check, add URLs to Supermemory, OpenRouter model list |
 
-### Wizard state
+### Key modules
 
-`ChatbotWizard` (`src/components/ChatbotWizard.tsx`) holds the entire `ChatbotConfig` object in a single `useState`. Each step receives `config` and an `onChange: (updates: Partial<ChatbotConfig>) => void` callback. Steps are animated with framer-motion slide transitions.
+- `src/lib/widget.ts` — `WidgetConfig` (all appearance settings), `DEFAULT_WIDGET`, presets, palettes, fonts, `sanitizeWidget()` (validates untrusted config; output is rendered into inline styles on third-party sites).
+- `src/lib/bot.ts` — `AISettings` (use case, model, system prompt, allowed domains, knowledge namespace), use-case templates, `sanitizeAI()`.
+- `src/lib/chat-style.ts` — derives every colour/size the chat window needs from a `WidgetConfig`.
+- `src/components/chat/` — `ChatWindow` (variants `chat | support | search | bar | pill`), `Launcher`, `Teaser`, `ChattyOrb` (three.js, lazy-loaded), `useChat` (streaming hook), `RichText` (safe mini-markdown). Shared by the editor preview and the embed so they always match.
+- `src/components/editor/` — `Editor` (state, undo/redo, publish, floating/docked panel), `Stage` (preview canvas with drag-to-move/resize), `Panels` (design tabs), `AiPanel`, `Setup` (3-step onboarding), `CodeDrawer` (install guides from `src/lib/embed-code.ts`).
+- `src/lib/server/` — `store` (Upstash Redis REST or `.data/bots.json`), `crypto` (AES-GCM for API keys, HMAC session tokens, derived from `CHATTY_SECRET`), `llm` (OpenRouter streaming), `knowledge` (Supermemory v5 SDK: `search`/`add` by namespace), `rate-limit` (in-memory).
 
-**Steps:**
-| # | Label | Component | Configures |
-|---|-------|-----------|------------|
-| 1 | Identity | `Step1` | `name`, `useCase`, `useCaseDescription` |
-| 2 | Intelligence | `Step2` | `systemPrompt`, `model`, `apiKey` |
-| 3 | Memory | `Step3` | `memoryProvider`, `ragUrls`, `ragFiles` |
-| 4 | Tools | `Step4` | `tools.webSearch`, `tools.calendly` |
-| 5 | Design | `Step5` | All UI/style fields; renders `ChatPreview` live |
-| 6 | Deploy | `Step6` | Read-only; generates embed code in 4 formats |
+### Editor state
 
-### Key types
+`Editor` keeps the widget config in an undo history (`update(patch)`; changes within 450ms merge into one step), plus AI settings and UI prefs, all persisted to `localStorage`. API keys live only in `sessionStorage` until publish, after which they're cleared from the browser and the preview chats through the owner mode. The editor UI is themeable (`data-theme` light/dark + `--accent`) via the `.c4-app` tokens in `globals.css`.
 
-`src/lib/types.ts` is the single source of truth for:
-- `ChatbotConfig` — the full config interface (all step fields)
-- `DEFAULT_CONFIG` — initial wizard state
-- `USE_CASE_PROMPTS` — pre-written system prompts keyed by `UseCase`
-- Union types: `UseCase`, `MemoryProvider`, `LLMModel`, `ChatTemplate`
+### Embed sizing protocol
 
-### Styling conventions
-
-- Tailwind CSS v4 with `@tailwindcss/postcss`
-- Custom utility classes defined in `globals.css`: `glass`, `glass-hover`, `grid-bg`, `code-block`
-- Dark-only theme (`bg-[#0a0a0f]` base, set in `layout.tsx`)
-- `cn()` from `src/lib/utils.ts` wraps `clsx` + `tailwind-merge` for conditional classes
-- Purple/blue gradient brand palette (`purple-500`/`blue-500`)
-
-### Step 5 (Design) layout
-
-Split into left controls + right sticky live preview (`ChatPreview`). Controls are tabbed: Template, Style, Content, Behavior. `ChatPreview` (`src/components/ChatPreview.tsx`) renders a mock chat UI driven by the current config.
-
-### Step 6 (Deploy) code generation
-
-`generateEmbedCode()` in `Step6.tsx` produces four embed formats: Script Tag, React Component, NPM Package, iFrame. The bot ID is randomly generated client-side on mount (`useEffect`) and is for demonstration only.
+The iframe is always exactly as large as what's visible so the host page stays clickable. `EmbedClient` measures its content and posts `{ type: "box", box }` (`corner | bottom | edge | side | fill | inline`); the loader applies fixed positioning. The loader sends `{ type: "env", mobile, vw, vh }` after the embed posts `ready`.

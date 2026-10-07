@@ -1,14 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { ArrowRight, Code2, Zap, Sparkles, Shield, Globe, Bot, Github } from "lucide-react";
 
 const FEATURES = [
   {
     icon: <Bot className="w-6 h-6" />,
     title: "Smart AI Builder",
-    description: "Auto-generates system prompts based on your use case. Supports GPT-4, Claude, Gemini, and open-source models.",
+    description: "Writes the instructions for your use case. One OpenRouter key gives you GPT, Claude, Gemini and open-source models.",
     color: "from-purple-500 to-violet-500",
   },
   {
@@ -20,13 +19,13 @@ const FEATURES = [
   {
     icon: <Sparkles className="w-6 h-6" />,
     title: "RAG & Memory",
-    description: "Connect Pinecone, Weaviate, Chroma, Qdrant, Supabase, or Redis for intelligent document search.",
+    description: "Add a Supermemory key and your assistant answers from your own website and docs.",
     color: "from-green-500 to-emerald-500",
   },
   {
     icon: <Zap className="w-6 h-6" />,
-    title: "Powerful Tools",
-    description: "Real-time web search and Calendly scheduling out of the box. More integrations coming.",
+    title: "No Backend to Run",
+    description: "Paste your API keys and publish. Keys are encrypted server-side and never reach your visitors.",
     color: "from-yellow-500 to-orange-500",
   },
   {
@@ -38,7 +37,7 @@ const FEATURES = [
   {
     icon: <Shield className="w-6 h-6" />,
     title: "Open Source",
-    description: "MIT licensed. Self-host it, fork it, extend it. Your keys stay local, nothing is stored on our servers.",
+    description: "MIT licensed. Self-host it, fork it, extend it. Restrict each assistant to your own domains.",
     color: "from-teal-500 to-cyan-500",
   },
 ];
@@ -146,22 +145,22 @@ export function LandingPage({ onGetStarted }: { onGetStarted: () => void }) {
               {" "}
               <span className="text-yellow-300">src</span>
               <span className="text-white/60">{"=\""}</span>
-              <span className="text-blue-300">{"https://cdn.chatty4everyone.dev/v1/widget.js"}</span>
+              <span className="text-blue-300">{"https://your-chatty-host/widget.js"}</span>
               <span className="text-white/60">{"\""}
               {"\n  "}
               </span>
-              <span className="text-yellow-300">data-bot-id</span>
+              <span className="text-yellow-300">data-bot</span>
               <span className="text-white/60">{"=\""}</span>
-              <span className="text-blue-300">aria-k8x2m1</span>
+              <span className="text-blue-300">bot_k8x2m1q9</span>
               <span className="text-white/60">{"\""}
               {"\n  "}
               </span>
-              <span className="text-yellow-300">defer</span>
+              <span className="text-yellow-300">async</span>
               <span className="text-green-400">{"\n></script>"}</span>
             </pre>
           </div>
           <p className="text-white/30 text-sm mt-3">
-            That&apos;s it. 3 lines → chatbot on your website.
+            That&apos;s it. One line → an AI assistant on your website.
           </p>
         </motion.div>
       </section>
@@ -245,12 +244,12 @@ export function LandingPage({ onGetStarted }: { onGetStarted: () => void }) {
           <div className="absolute left-8 top-0 bottom-0 w-px bg-white/5 hidden sm:block" />
           <div className="space-y-8">
             {[
-              { step: "01", title: "Name & Purpose", desc: "Tell us what your chatbot is for. Choose from 8 use case templates." },
-              { step: "02", title: "AI Model & Prompt", desc: "Pick your LLM and let us auto-generate a system prompt — or write your own." },
-              { step: "03", title: "Connect Memory", desc: "Link a vector database for RAG. Supports Pinecone, Weaviate, Chroma, Qdrant, Supabase, Redis." },
-              { step: "04", title: "Add Tools", desc: "Enable web search and Calendly scheduling to give your bot real capabilities." },
-              { step: "05", title: "Design the UI", desc: "Choose a template, set colors, fonts, avatar, position, and size. Live preview as you go." },
-              { step: "06", title: "Copy & Deploy", desc: "Get 1-5 lines of code. Paste into any website. Done." },
+              { step: "01", title: "Your website", desc: "Enter your site and name your assistant." },
+              { step: "02", title: "What it does", desc: "Pick support, sales, docs, bookings or a store — we write its instructions." },
+              { step: "03", title: "Connect your keys", desc: "Paste an OpenRouter key (any model) and, optionally, Supermemory for answers from your pages." },
+              { step: "04", title: "Pick a layout", desc: "Floating bubble, support desk, chat bar, ⌘K search, side panel, inline or full page." },
+              { step: "05", title: "Design it live", desc: "Drag, resize and restyle the widget right on a preview of your site." },
+              { step: "06", title: "Publish & paste", desc: "Copy one script tag — or follow the WordPress, Shopify, Wix or GTM guide." },
             ].map((item, i) => (
               <motion.div
                 key={item.step}

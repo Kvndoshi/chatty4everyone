@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chatty4Everyone
 
-## Getting Started
+Put an AI assistant on any website with one line of code.
 
-First, run the development server:
+1. **Set up** — enter your website, pick what the assistant does, paste an [OpenRouter](https://openrouter.ai/keys) key (and optionally a [Supermemory](https://console.supermemory.ai) key so it answers from your pages).
+2. **Design** — pick a layout (floating bubble, support desk, chat bar, ⌘K search, side panel, inline, full page) and style it live on a preview of your site. Drag the launcher or window header to move it, drag the edges to resize, click any part of the widget to edit it.
+3. **Publish** — copy one line into your site:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```html
+<script src="https://YOUR-HOST/widget.js" data-bot="bot_xxxxxxxx" async></script>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Install guides for WordPress, Shopify, Wix/Squarespace/Webflow, Google Tag Manager and React/Next.js are built into the editor.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Run it locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+cp .env.example .env.local   # set CHATTY_SECRET
+npm run dev                  # http://localhost:3000 → "Get started"
+```
 
-## Learn More
+The editor is at `/editor`. Without a key the preview uses demo replies; add an OpenRouter key to get real answers.
 
-To learn more about Next.js, take a look at the following resources:
+## How it works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Editor** (`/editor`) — everything you design is saved in your browser until you publish.
+- **API** (`/api/*`) — publishing stores the bot's design and settings. API keys are encrypted with AES-256-GCM (`CHATTY_SECRET`) and are never sent to visitors.
+- **Widget** (`/widget.js` → `/embed/[botId]`) — the script tag adds a transparent, auto-sized iframe that renders the chat. Only the sites listed under **AI → Allowed websites** can load it.
+- **Answers** — the chat route calls OpenRouter with your key, adding relevant snippets from your Supermemory knowledge base, and streams the reply.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Control it from your own buttons with `window.Chatty.open()`, `.close()` and `.toggle()`.
 
-## Deploy on Vercel
+## Configuration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Variable | Purpose |
+|---|---|
+| `CHATTY_SECRET` | **Required in production.** 16+ random characters; encrypts stored API keys and signs visitor sessions. |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Store bots in Upstash Redis. Without them bots are saved to `.data/bots.json`, which works for local and single-server installs but **not** on serverless hosts like Vercel. |
+| `NEXT_PUBLIC_APP_URL` | Public URL used in the generated install code (defaults to the editor's origin). |
+| `OPENROUTER_BASE_URL` | Optional OpenRouter-compatible endpoint (defaults to `https://openrouter.ai/api/v1`). |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+npm run dev     # dev server (Turbopack)
+npm run build   # production build
+npm run lint    # ESLint
+```
